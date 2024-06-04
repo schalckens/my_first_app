@@ -5,31 +5,19 @@ import 'author.dart';
 class Book {
   final int id;
   final String title;
-  final String? description;
-  final String? comment;
-  final String? mainGenre;
-  final String? coverUrl;
-  final Author? author;
+  final String coverUrl;
 
   Book({
     required this.id,
     required this.title,
-    this.description,
-    this.comment,
-    this.mainGenre,
-    this.coverUrl,
-    this.author,
+    required this.coverUrl,
   });
 
   factory Book.fromJson(Map<String, dynamic> json) {
     return Book(
       id: json['id'],
       title: json['title'],
-      description: json['description'],
-      comment: json['comment'],
-      mainGenre: json['main_genre'],
-      coverUrl: json['cover_url'],
-      author: json['author'] != null ? Author.fromJson(json['author']) : null,
+      coverUrl: json['coverUrl'],
     );
   }
 }

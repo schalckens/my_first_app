@@ -81,17 +81,47 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 }
 
-class AccueilPage extends StatelessWidget {
+
+class AccueilPage extends StatefulWidget {
+  @override
+  _AccueilPageState createState() => _AccueilPageState();
+}
+
+class _AccueilPageState extends State<AccueilPage> {
+  final List<String> genres = ['Fiction', 'Romance', 'Science-fiction'];
+  late Map<String, List<Book>> recommendations;
+  bool isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    fetchRecommendations();
+  }
+
+  Future<void> fetchRecommendations() async {
+    recommendations = {};
+
+    for (String genre in genres) {
+      final response = await http.get(Uri.parse('https://jsonplaceholder.typicode.com/photos?_limit=10'));
+      if (response.statusCode == 200) {
+        List<dynamic> data = json.decode(response.body);
+        recommendations[genre] = data.map((json) => Book.fromJson({
+          'id': json['id'],
+          'title': json['title'],
+          'coverUrl': json['url'],
+        })).toList();
+      } else {
+        throw Exception('Failed to load recommendations');
+      }
+    }
+
+    setState(() {
+      isLoading = false;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
-    // Listes de recommandations fictives pour démonstration
-    final List<String> genres = ['Fiction', 'Romance', 'Science-fiction'];
-    final Map<String, List<String>> recommendations = {
-      'Fiction': ['Livre A', 'Livre B', 'Livre C'],
-      'Romance': ['Livre X', 'Livre Y', 'Livre Z'],
-      'Science-fiction': ['Livre P', 'Livre Q', 'Livre R'],
-    };
-
     return Scaffold(
       appBar: AppBar(
         title: const Text('Accueil'),
@@ -99,7 +129,9 @@ class AccueilPage extends StatelessWidget {
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
-        child: Column(
+        child: isLoading
+            ? Center(child: CircularProgressIndicator())
+            : Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
@@ -128,6 +160,7 @@ class AccueilPage extends StatelessWidget {
                           scrollDirection: Axis.horizontal,
                           itemCount: recommendations[genres[index]]!.length,
                           itemBuilder: (context, subIndex) {
+                            final book = recommendations[genres[index]]![subIndex];
                             return Container(
                               width: 100,
                               margin: EdgeInsets.only(right: 10),
@@ -135,11 +168,16 @@ class AccueilPage extends StatelessWidget {
                                 color: Colors.grey[300],
                                 borderRadius: BorderRadius.circular(10),
                               ),
-                              child: Center(
-                                child: Text(
-                                  recommendations[genres[index]]![subIndex],
-                                  textAlign: TextAlign.center,
-                                ),
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Image.network(book.coverUrl, height: 80, fit: BoxFit.cover),
+                                  SizedBox(height: 5),
+                                  Text(
+                                    book.title,
+                                    textAlign: TextAlign.center,
+                                  ),
+                                ],
                               ),
                             );
                           },
@@ -151,39 +189,13 @@ class AccueilPage extends StatelessWidget {
                 },
               ),
             ),
-            Text(
-              'Suggestions de Livres',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-            ),
-            SizedBox(height: 10),
-            Expanded(
-              child: ListView.builder(
-                scrollDirection: Axis.horizontal,
-                itemCount: 3,
-                itemBuilder: (context, index) {
-                  return Container(
-                    width: 120,
-                    margin: EdgeInsets.only(right: 10),
-                    decoration: BoxDecoration(
-                      color: Colors.grey[300],
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Center(
-                      child: Text(
-                        'Livre ${index + 1}',
-                        textAlign: TextAlign.center,
-                      ),
-                    ),
-                  );
-                },
-              ),
-            ),
           ],
         ),
       ),
     );
   }
 }
+
 
 class SelectionPage extends StatefulWidget {
   @override
