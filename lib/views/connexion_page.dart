@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../auth.dart';
+import '../main.dart';
 
 class ConnexionPage extends StatefulWidget {
   @override
@@ -8,54 +11,62 @@ class ConnexionPage extends StatefulWidget {
 class _ConnexionPageState extends State<ConnexionPage> {
   final TextEditingController _usernameController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
+  bool _isLogin = true;
+
+  void _toggleFormType() {
+    setState(() {
+      _isLogin = !_isLogin;
+    });
+  }
 
   void _login() {
-    // Données en dur pour la connexion
     String username = _usernameController.text;
     String password = _passwordController.text;
 
     if (username == 'superuser' && password == 'admin') {
-      // Succès de la connexion
-      print('Connexion réussie');
+      Provider.of<Auth>(context, listen: false).login();
     } else {
-      // Échec de la connexion
       print('Identifiant ou mot de passe incorrect');
     }
+  }
 
-    // Commentaires pour la future implémentation de la connexion via API
-    // Future<void> _loginWithAPI() async {
-    //   final response = await http.post(
-    //     Uri.parse('https://api.example.com/login'),
-    //     body: json.encode({
-    //       'username': username,
-    //       'password': password,
-    //     }),
-    //     headers: {'Content-Type': 'application/json'},
-    //   );
+  void _signup() {
+    Provider.of<Auth>(context, listen: false).signup();
+  }
 
-    //   if (response.statusCode == 200) {
-    //     print('Connexion réussie');
-    //   } else {
-    //     print('Échec de la connexion');
-    //   }
-    // }
+  void _logout() {
+    Provider.of<Auth>(context, listen: false).logout();
+    // Réinitialisez l'index sélectionné après la déconnexion
+    Navigator.of(context).pushAndRemoveUntil(
+      MaterialPageRoute(builder: (context) => MyHomePage()),
+          (Route<dynamic> route) => false,
+    );
   }
 
   @override
   Widget build(BuildContext context) {
+    final auth = Provider.of<Auth>(context);
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Connexion'),
+        title: Text(auth.isAuthenticated ? 'Déconnexion' : (_isLogin ? 'Connexion' : 'Inscription')),
         backgroundColor: const Color.fromARGB(249, 248, 123, 181),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
-        child: Column(
+        child: auth.isAuthenticated
+            ? Center(
+          child: ElevatedButton(
+            onPressed: _logout,
+            child: Text('Se déconnecter'),
+          ),
+        )
+            : Column(
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Text(
-              'Identifiez-vous',
+              _isLogin ? 'Identifiez-vous' : 'Créez un compte',
               style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
               textAlign: TextAlign.center,
             ),
@@ -78,8 +89,16 @@ class _ConnexionPageState extends State<ConnexionPage> {
             ),
             SizedBox(height: 20),
             ElevatedButton(
-              onPressed: _login,
-              child: Text('Se connecter'),
+              onPressed: _isLogin ? _login : _signup,
+              child: Text(_isLogin ? 'Se connecter' : 'S\'inscrire'),
+            ),
+            TextButton(
+              onPressed: _toggleFormType,
+              child: Text(
+                _isLogin
+                    ? 'Pas de compte? S\'inscrire'
+                    : 'Déjà un compte? Se connecter',
+              ),
             ),
           ],
         ),
